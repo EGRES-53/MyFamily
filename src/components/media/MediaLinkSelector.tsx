@@ -7,8 +7,8 @@ import Button from '../ui/Button';
 interface Media {
   id: string;
   title: string;
-  url: string;
-  type: 'image' | 'document';
+  file_url: string;
+  file_type: 'image' | 'document';
 }
 
 interface MediaLinkSelectorProps {
@@ -81,7 +81,7 @@ const MediaLinkSelector: React.FC<MediaLinkSelectorProps> = ({ eventId, onLinkCo
       {media.map((item) => (
         <div key={item.id} className="flex items-center p-4 border rounded-lg hover:bg-primary-50">
           <div className="flex-shrink-0 mr-4">
-            {item.type === 'image' ? (
+            {item.file_type === 'image' ? (
               <ImageIcon className="h-8 w-8 text-primary-600" />
             ) : (
               <FileText className="h-8 w-8 text-primary-600" />
@@ -89,7 +89,7 @@ const MediaLinkSelector: React.FC<MediaLinkSelectorProps> = ({ eventId, onLinkCo
           </div>
           <div className="flex-grow">
             <h3 className="text-sm font-medium">{item.title}</h3>
-            <p className="text-xs text-neutral-500">{item.type}</p>
+            <p className="text-xs text-neutral-500">{item.file_type}</p>
           </div>
           <Button
             variant="outline"

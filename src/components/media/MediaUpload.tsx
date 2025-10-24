@@ -55,12 +55,10 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ eventId, onUploadComplete, on
           .from('media')
           .insert({
             title: file.name,
-            url: publicUrl,
-            type: file.type.startsWith('image/') ? 'image' : 'document',
+            file_url: publicUrl,
+            file_type: file.type.startsWith('image/') ? 'image' : 'document',
             event_id: eventId === 'gallery' ? null : eventId,
-            created_by: currentUser.id,
-            created_at: new Date().toISOString(),
-            uploaded_at: new Date().toISOString()
+            created_by: currentUser.id
           })
           .select();
 
@@ -139,6 +137,10 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ eventId, onUploadComplete, on
         )}
       </div>
     </div>
+  );
+};
+
+export default MediaUpload;
   );
 };
 

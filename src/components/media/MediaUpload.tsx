@@ -141,7 +141,4 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ eventId, onUploadComplete, on
 };
 
 export default MediaUpload;
-  );
-};
 
-export default MediaUpload;

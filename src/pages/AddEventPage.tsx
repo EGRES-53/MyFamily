@@ -49,7 +49,7 @@ const AddEventPage: React.FC = () => {
         description: formData.description,
         location: formData.location || null,
         precise_date: formData.precise_date,
-        created_by: currentUser.id
+        user_id: currentUser.id
       };
 
       console.log('Données à insérer:', eventData);

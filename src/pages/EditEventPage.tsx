@@ -14,6 +14,21 @@ interface EventFormData {
   precise_date: boolean;
 }
 
+import { supabase } from '@/supabase';
+
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) throw new Error('Non authentifié');
+
+const { error } = await supabase.from('events').insert([{
+  title,
+  date,                // 'YYYY-MM-DD'
+  description,
+  location,
+  precise_date: true,
+  created_by: user.id, // ← important pour la FK
+}]);
+
+
 const EditEventPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();

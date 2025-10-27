@@ -27,64 +27,84 @@ const EditEventPage: React.FC = () => {
     precise_date: true
   });
 
-  useEffect(() => {
-    fetchEvent();
-  }, [id]);
+  // ...
 
-  const fetchEvent = async () => {
-    if (!id) return;
+useEffect(() => {
+  if (!id) {
+    showToast("Identifiant d'événement manquant", "error");
+    navigate('/timeline');
+    return;
+  }
+  fetchEvent();
+}, [id]);
 
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', id)
-        .single();
+const fetchEvent = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .select('id,title,date,description,location,precise_date')
+      .eq('id', id!)
+      .single();
 
-      if (error) throw error;
-      if (data) {
-        setFormData({
-          title: data.title,
-          date: data.date,
-          description: data.description,
-          location: data.location || '',
-          precise_date: data.precise_date
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching event:', error);
-      showToast('Erreur lors du chargement de l\'événement', 'error');
-      navigate('/timeline');
+    if (error) throw error;
+
+    setFormData({
+      title: data.title ?? '',
+      // s'assure d'un format 'YYYY-MM-DD'
+      date: (data.date ?? '').slice(0, 10),
+      description: data.description ?? '',
+      location: data.location ?? '',
+      precise_date: !!data.precise_date,
+    });
+  } catch (err) {
+    console.error('Error fetching event:', err);
+    showToast("Erreur lors du chargement de l'événement", 'error');
+    navigate('/timeline');
+  }
+};
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!id) {
+    showToast("Identifiant d'événement manquant", "error");
+    return;
+  }
+  setLoading(true);
+
+  try {
+    // vérifie que l'utilisateur est bien connecté (RLS)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      showToast('Veuillez vous reconnecter.', 'error');
+      return;
     }
-  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+    const payload = {
+      title: formData.title.trim(),
+      date: formData.date ? formData.date.slice(0, 10) : null, // 'YYYY-MM-DD' ou null
+      description: formData.description?.trim() || null,
+      location: formData.location?.trim() || null,
+      precise_date: !!formData.precise_date,
+    };
 
-    try {
-      const { error } = await supabase
-        .from('events')
-        .update({
-          title: formData.title,
-          date: formData.date,
-          description: formData.description,
-          location: formData.location || null,
-          precise_date: formData.precise_date
-        })
-        .eq('id', id);
+    const { data, error } = await supabase
+      .from('events')
+      .update(payload)
+      .eq('id', id)                 // cible l'événement
+      .select()                     // renvoie la ligne mise à jour
+      .single();
 
-      if (error) throw error;
+    if (error) throw error;
 
-      showToast('Événement modifié avec succès', 'success');
-      navigate(`/event/${id}`);
-    } catch (error) {
-      console.error('Error updating event:', error);
-      showToast('Erreur lors de la modification de l\'événement', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+    showToast('Événement modifié avec succès', 'success');
+    navigate(`/event/${data.id}`);
+  } catch (err: any) {
+    console.error('Error updating event:', err);
+    showToast(`Erreur lors de la modification: ${err?.message ?? 'inconnue'}`, 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;

@@ -58,7 +58,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ eventId, onUploadComplete, on
             file_url: publicUrl,
             file_type: file.type.startsWith('image/') ? 'image' : 'document',
             event_id: eventId === 'gallery' ? null : eventId,
-            created_by: currentUser.id
+            user_id: currentUser.id
           })
           .select();
 

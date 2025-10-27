@@ -40,7 +40,7 @@ const StoriesPage: React.FC = () => {
             full_name
           )
         `)
-        .eq('created_by', currentUser?.id)
+        .eq('user_id', currentUser?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

@@ -12,7 +12,7 @@ interface Story {
   content: string;
   created_at: string;
   updated_at: string;
-  created_by: string;
+  user_id: string;
   profiles?: {
     full_name: string;
   };

@@ -14,7 +14,7 @@ interface MediaItem {
   url: string;
   type: 'image' | 'document';
   created_at: string;
-  created_by: string;
+  user_id: string;
   event_id: string | null;
 }
 

@@ -13,7 +13,7 @@ interface Event {
   description: string;
   date: string;
   location: string;
-  created_by: string;
+  user_id: string;
   created_at: string;
   precise_date?: boolean;
   profiles?: {

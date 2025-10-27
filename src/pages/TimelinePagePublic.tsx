@@ -14,7 +14,7 @@ interface Event {
   location: string | null;
   precise_date: boolean;
   created_at: string;
-  created_by: string;
+  user_id: string;
   media?: Array<{
     id: string;
     file_url: string;

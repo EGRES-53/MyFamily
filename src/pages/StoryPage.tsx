@@ -57,7 +57,7 @@ const StoryPage: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!story || !currentUser || story.created_by !== currentUser.id) return;
+    if (!story || !currentUser || story.user_id !== currentUser.id) return;
 
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce récit ? Cette action est irréversible.')) {
       return;

@@ -54,7 +54,7 @@ const TimelinePagePublic: React.FC = () => {
               file_type
             )
           `)
-          .eq('created_by', currentUser.id)
+          .eq('user_id', currentUser.id)
           .order('date', { ascending: true });
 
         if (error) throw error;

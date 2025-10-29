@@ -224,7 +224,7 @@ const TimelinePage: React.FC = () => {
           </div>
           <div className="bg-white p-6 rounded-lg shadow-vintage border border-primary-100">
             <div className="text-2xl font-bold text-primary-600 mb-1">
-              {new Set(events.map(e => e.created_by)).size}
+              {new Set(events.map(e => e.user_id)).size}
             </div>
             <div className="text-sm text-neutral-600">Contributeurs</div>
           </div>
@@ -347,7 +347,7 @@ const TimelinePage: React.FC = () => {
                     <span className="inline-block px-3 py-1 bg-primary-600 text-white text-xs font-bold rounded-full">
                       {new Date(event.date).getFullYear()}
                     </span>
-                    {currentUser && currentUser.id === event.created_by && (
+                    {currentUser && currentUser.id === event.user_id && (
                       <div className="flex gap-1">
                         <button
                           onClick={() => navigate(`/edit-event/${event.id}`)}

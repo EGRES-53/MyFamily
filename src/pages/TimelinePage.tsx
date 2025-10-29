@@ -315,7 +315,7 @@ const TimelinePage: React.FC = () => {
                           )}
                         </div>
 
-                        {currentUser && currentUser.id === event.created_by && (
+                        {currentUser && currentUser.id === event.user.id && (
                           <div className="flex gap-2 ml-4">
                             <button
                               onClick={() => navigate(`/edit-event/${event.id}`)}

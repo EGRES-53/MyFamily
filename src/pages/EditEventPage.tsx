@@ -25,7 +25,7 @@ const { error } = await supabase.from('events').insert([{
   description,
   location,
   precise_date: true,
-  created_by: user.id, // ← important pour la FK
+  user_id: user.id, // ← important pour la FK
 }]);
 
 

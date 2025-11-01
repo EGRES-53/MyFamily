@@ -14,7 +14,6 @@ interface EventFormData {
   precise_date: boolean;
 }
 
-import { supabase } from '@/supabase';
 
 const { data: { user } } = await supabase.auth.getUser();
 if (!user) throw new Error('Non authentifié');
@@ -80,42 +79,37 @@ const fetchEvent = async () => {
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  if (!id) {
-    showToast("Identifiant d'événement manquant", "error");
-    return;
-  }
   setLoading(true);
 
   try {
-    // vérifie que l'utilisateur est bien connecté (RLS)
+    // Option A : si tu as déjà useAuth, préfère currentUser.id
+    // const { currentUser } = useAuth();
+    // if (!currentUser) throw new Error('Non authentifié');
+    // const userId = currentUser.id;
+
+    // Option B : sinon on lit l'utilisateur depuis Supabase
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      showToast('Veuillez vous reconnecter.', 'error');
-      return;
-    }
+    if (!user) throw new Error('Non authentifié');
+    const userId = user.id;
 
-    const payload = {
-      title: formData.title.trim(),
-      date: formData.date ? formData.date.slice(0, 10) : null, // 'YYYY-MM-DD' ou null
-      description: formData.description?.trim() || null,
-      location: formData.location?.trim() || null,
-      precise_date: !!formData.precise_date,
-    };
+    const { title, date, description, location, precise_date } = formData;
 
-    const { data, error } = await supabase
-      .from('events')
-      .update(payload)
-      .eq('id', id)                 // cible l'événement
-      .select()                     // renvoie la ligne mise à jour
-      .single();
+    const { error } = await supabase.from('events').insert([{
+      user_id: userId,                          // ← important
+      title: title.trim(),
+      date: date ? date.slice(0, 10) : null,    // 'YYYY-MM-DD'
+      description: description?.trim() || null,
+      location: location?.trim() || null,
+      precise_date: !!precise_date,
+    }]).select().single();
 
     if (error) throw error;
 
-    showToast('Événement modifié avec succès', 'success');
-    navigate(`/event/${data.id}`);
+    showToast('Événement créé avec succès!', 'success');
+    navigate('/timeline');
   } catch (err: any) {
-    console.error('Error updating event:', err);
-    showToast(`Erreur lors de la modification: ${err?.message ?? 'inconnue'}`, 'error');
+    console.error('Create event error:', err);
+    showToast(err?.message ?? "Erreur lors de la création de l'événement", 'error');
   } finally {
     setLoading(false);
   }

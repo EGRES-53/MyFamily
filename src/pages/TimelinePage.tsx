@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { Calendar, MapPin, Plus, Download, CreditCard as Edit, Trash2, Search, Filter, Grid, List } from 'lucide-react';
 import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import TimelinePDF from '../components/timeline/TimelinePDF';
 
 interface Event {
   id: string;
@@ -142,6 +143,21 @@ const TimelinePage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3 mt-4 lg:mt-0">
             {currentUser ? (
               <>
+                {events.length > 0 && (
+                  <TimelinePDF
+                    events={filteredEvents.map(e => ({
+                      id: e.id,
+                      title: e.title,
+                      date: e.date,
+                      description: e.description,
+                      location: e.location,
+                      precise_date: e.precise_date ?? true,
+                      media_count: 0
+                    }))}
+                    mode="download"
+                    fileName={`chronologie-${new Date().toISOString().split('T')[0]}.pdf`}
+                  />
+                )}
                 <Link to="/add-event">
                   <Button variant="primary" icon={<Plus size={18} />}>
                     Ajouter un événement

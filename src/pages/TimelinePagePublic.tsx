@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { Calendar, MapPin, Plus, Download, CreditCard as Edit2, Trash2, Image as ImageIcon } from 'lucide-react';
 import Button from '../components/ui/Button';
+import TimelinePDF from '../components/timeline/TimelinePDF';
 
 interface Event {
   id: string;
@@ -191,9 +192,21 @@ const TimelinePagePublic: React.FC = () => {
                     Ajouter un événement
                   </Button>
                 </Link>
-                <Button variant="outline" icon={<Download size={18} />}>
-                  Exporter PDF
-                </Button>
+                {events.length > 0 && (
+                  <TimelinePDF
+                    events={events.map(e => ({
+                      id: e.id,
+                      title: e.title,
+                      date: e.date,
+                      description: e.description,
+                      location: e.location || '',
+                      precise_date: e.precise_date ?? true,
+                      media_count: e.media?.length || 0
+                    }))}
+                    mode="download"
+                    fileName={`chronologie-${new Date().toISOString().split('T')[0]}.pdf`}
+                  />
+                )}
               </>
             ) : (
               <>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { Menu, X, User, LogOut, Home, Database, BookOpen, TestTube, Shield, Calendar, Image } from 'lucide-react';
+import { Menu, X, User, LogOut, Home, Database, BookOpen, TestTube, Shield, Calendar, Image, BarChart3 } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -60,11 +60,18 @@ const Navbar: React.FC = () => {
                   Galerie
                 </Link>
 
-                <Link 
-                  to="/stories" 
+                <Link
+                  to="/stories"
                   className="px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:text-primary-600"
                 >
                   Récits
+                </Link>
+
+                <Link
+                  to="/admin/stats"
+                  className="px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:text-primary-600"
+                >
+                  Statistiques
                 </Link>
 
                 <Link
@@ -151,14 +158,25 @@ const Navbar: React.FC = () => {
                   </div>
                 </Link>
 
-                <Link 
-                  to="/stories" 
+                <Link
+                  to="/stories"
                   className="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-primary-50"
                   onClick={() => setIsOpen(false)}
                 >
                   <div className="flex items-center">
                     <BookOpen className="mr-2 h-5 w-5" />
                     Récits
+                  </div>
+                </Link>
+
+                <Link
+                  to="/admin/stats"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-primary-50"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <div className="flex items-center">
+                    <BarChart3 className="mr-2 h-5 w-5" />
+                    Statistiques
                   </div>
                 </Link>
 

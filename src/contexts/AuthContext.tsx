@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 interface AuthContextType {
   currentUser: any;
   loading: boolean;
+  userRole: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -23,12 +24,23 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('Session initiale:', session?.user);
       setCurrentUser(session?.user ?? null);
+
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        setUserRole(profile?.role || null);
+      }
+
       setLoading(false);
     });
 
@@ -36,9 +48,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session?.user);
-      setCurrentUser(session?.user ?? null);
-      setLoading(false);
+      (async () => {
+        console.log('Auth state changed:', _event, session?.user);
+        setCurrentUser(session?.user ?? null);
+
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          setUserRole(profile?.role || null);
+        } else {
+          setUserRole(null);
+        }
+
+        setLoading(false);
+      })();
     });
 
     return () => subscription.unsubscribe();
@@ -93,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     currentUser,
     loading,
+    userRole,
     login,
     register,
     logout

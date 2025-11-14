@@ -2,6 +2,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Download } from 'lucide-react';
 
 interface TimelineEvent {
   id: string;
@@ -174,14 +175,17 @@ const TimelinePDF: React.FC<TimelinePDFProps> = ({
 }) => {
   if (mode === 'download') {
     return (
-      <PDFDownloadLink 
-        document={<TimelinePDFDocument events={events} />} 
+      <PDFDownloadLink
+        document={<TimelinePDFDocument events={events} />}
         fileName={fileName}
-        className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+        className="inline-flex items-center px-4 py-2 bg-white border-2 border-primary-600 text-primary-600 rounded-md hover:bg-primary-50 transition-colors font-medium"
       >
-        {({ blob, url, loading, error }) =>
-          loading ? 'Génération du PDF...' : 'Télécharger le PDF'
-        }
+        {({ blob, url, loading, error }) => (
+          <>
+            <Download size={18} className="mr-2" />
+            {loading ? 'Génération du PDF...' : 'Exporter PDF'}
+          </>
+        )}
       </PDFDownloadLink>
     );
   }

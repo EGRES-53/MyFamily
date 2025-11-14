@@ -17,6 +17,7 @@ import StoryPage from './pages/StoryPage';
 import NotFoundPage from './pages/NotFoundPage';
 import TestPage from './pages/TestPage';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminStatsPage from './pages/AdminStatsPage';
 
 function App() {
   return (
@@ -74,6 +75,11 @@ function App() {
           <Route path="admin" element={
             <ProtectedRoute>
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/stats" element={
+            <ProtectedRoute>
+              <AdminStatsPage />
             </ProtectedRoute>
           } />
           <Route path="test" element={

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { Image, Upload, Trash2, Download, Search } from 'lucide-react';
+import { Image, Upload, Trash2, Download, Search, FileDown } from 'lucide-react';
+import { downloadMediaLocally, getFilePathFromUrl, getSignedUrl, extractFilePathFromUrl } from '../utils/storage';
 import MediaUpload from '../components/media/MediaUpload';
 import Button from '../components/ui/Button';
 import { Gallery, Item } from 'react-photoswipe-gallery';
@@ -18,10 +19,14 @@ interface MediaItem {
   event_id: string | null;
 }
 
+interface MediaItemWithSignedUrl extends MediaItem {
+  signedUrl: string;
+}
+
 const GalleryPage: React.FC = () => {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
-  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [media, setMedia] = useState<MediaItemWithSignedUrl[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'image' | 'document'>('all');
@@ -43,7 +48,33 @@ const GalleryPage: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setMedia(data || []);
+
+      console.log('Fetched media:', data);
+      console.log('Media count:', data?.length);
+
+      // Générer des URLs signées pour chaque média
+      const mediaWithSignedUrls = await Promise.all(
+        (data || []).map(async (item) => {
+          const filePath = extractFilePathFromUrl(item.file_url);
+          console.log(`Processing media: ${item.title} - FilePath: ${filePath}`);
+
+          if (filePath && item.file_type === 'image') {
+            const signedUrl = await getSignedUrl(filePath);
+            console.log(`Signed URL generated for ${item.title}:`, signedUrl ? 'Success' : 'Failed');
+            return {
+              ...item,
+              signedUrl: signedUrl || item.file_url
+            };
+          }
+
+          return {
+            ...item,
+            signedUrl: item.file_url
+          };
+        })
+      );
+
+      setMedia(mediaWithSignedUrls);
     } catch (error: any) {
       console.error('Error fetching media:', error);
       showToast('Erreur lors du chargement des médias', 'error');
@@ -52,18 +83,30 @@ const GalleryPage: React.FC = () => {
     }
   };
 
+  const handleDownloadMedia = async (file_url: string, title: string) => {
+    try {
+      await downloadMediaLocally(file_url, title);
+      showToast('Fichier téléchargé avec succès', 'success');
+    } catch (error: any) {
+      console.error('Error downloading media:', error);
+      showToast('Erreur lors du téléchargement', 'error');
+    }
+  };
+
   const handleDeleteMedia = async (id: string, file_url: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce média ?')) return;
 
     try {
-      const filePath = file_url.split('/').slice(-2).join('/');
+      const filePath = getFilePathFromUrl(file_url);
 
-      const { error: storageError } = await supabase.storage
-        .from('media')
-        .remove([filePath]);
+      if (filePath) {
+        const { error: storageError } = await supabase.storage
+          .from('myfamily')
+          .remove([filePath]);
 
-      if (storageError) {
-        console.error('Storage error:', storageError);
+        if (storageError) {
+          console.error('Storage error:', storageError);
+        }
       }
 
       const { error: dbError } = await supabase
@@ -235,8 +278,8 @@ const GalleryPage: React.FC = () => {
                   <div key={item.id} className="group relative">
                     {item.file_type === 'image' ? (
                       <Item
-                        original={item.file_url}
-                        thumbnail={item.file_url}
+                        original={item.signedUrl}
+                        thumbnail={item.signedUrl}
                         width="1024"
                         height="768"
                       >
@@ -247,9 +290,19 @@ const GalleryPage: React.FC = () => {
                             className="aspect-square bg-neutral-100 rounded-lg overflow-hidden cursor-pointer"
                           >
                             <img
-                              src={item.file_url}
+                              src={item.signedUrl}
                               alt={item.title}
                               className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                              onError={(e) => {
+                                console.error('Image failed to load:', item.file_url);
+                                console.error('Signed URL:', item.signedUrl);
+                                e.currentTarget.style.display = 'none';
+                                const parent = e.currentTarget.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `<div class="flex flex-col items-center justify-center h-full"><div class="text-red-500 text-center p-4"><p class="text-sm font-medium mb-2">Erreur de chargement</p><p class="text-xs">${item.title}</p></div></div>`;
+                                }
+                              }}
+                              loading="lazy"
                             />
                           </div>
                         )}
@@ -257,12 +310,19 @@ const GalleryPage: React.FC = () => {
                     ) : (
                       <div className="aspect-square bg-neutral-100 rounded-lg overflow-hidden flex items-center justify-center">
                         <div className="text-center">
-                          <Download className="h-12 w-12 text-neutral-400 mx-auto mb-2" />
+                          <FileDown className="h-12 w-12 text-neutral-400 mx-auto mb-2" />
                           <p className="text-xs text-neutral-600 px-2 truncate">{item.title}</p>
                         </div>
                       </div>
                     )}
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                      <button
+                        onClick={() => handleDownloadMedia(item.signedUrl, item.title)}
+                        className="bg-primary-500 text-white p-2 rounded-full hover:bg-primary-600 transition-colors shadow-lg"
+                        title="Télécharger"
+                      >
+                        <Download size={16} />
+                      </button>
                       <button
                         onClick={() => handleDeleteMedia(item.id, item.file_url)}
                         className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg"

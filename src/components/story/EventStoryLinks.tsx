@@ -23,12 +23,23 @@ const EventStoryLinks: React.FC<EventStoryLinksProps> = ({ eventId, onUnlink }) 
 
   const fetchLinkedStories = async () => {
     try {
+      // Vérifier que eventId est valide
+      if (!eventId || eventId === 'undefined' || eventId === 'null') {
+        console.warn('Invalid eventId:', eventId);
+        setLinkedStories([]);
+        setLoading(false);
+        return;
+      }
+
       const { data: eventStories, error: linkError } = await supabase
         .from('event_stories')
         .select('story_id')
         .eq('event_id', eventId);
 
-      if (linkError) throw linkError;
+      if (linkError) {
+        console.error('Error fetching event_stories:', linkError);
+        throw linkError;
+      }
 
       if (!eventStories || eventStories.length === 0) {
         setLinkedStories([]);
@@ -55,7 +66,12 @@ const EventStoryLinks: React.FC<EventStoryLinksProps> = ({ eventId, onUnlink }) 
   };
 
   useEffect(() => {
-    fetchLinkedStories();
+    // Ne charger que si eventId est valide
+    if (eventId && eventId !== 'undefined' && eventId !== 'null') {
+      fetchLinkedStories();
+    } else {
+      setLoading(false);
+    }
   }, [eventId]);
 
   const handleUnlink = async (storyId: string) => {
@@ -132,3 +148,4 @@ const EventStoryLinks: React.FC<EventStoryLinksProps> = ({ eventId, onUnlink }) 
 };
 
 export default EventStoryLinks;
+

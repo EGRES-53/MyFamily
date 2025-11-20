@@ -190,11 +190,13 @@ const EventPage: React.FC = () => {
             </div>
           )}
 
-          <EventStoryLinks
-            key={`stories-${refreshKey}`}
-            eventId={event.id}
-            onUnlink={() => setRefreshKey(prev => prev + 1)}
-          />
+          {event?.id && (
+            <EventStoryLinks
+              key={`stories-${refreshKey}`}
+              eventId={event.id}
+              onUnlink={() => setRefreshKey(prev => prev + 1)}
+            />
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow-vintage p-6">
@@ -227,11 +229,13 @@ const EventPage: React.FC = () => {
             </div>
           )}
 
-          <EventMediaLinks
-            key={`media-${refreshKey}`}
-            eventId={event.id}
-            onUnlink={() => setRefreshKey(prev => prev + 1)}
-          />
+          {event?.id && (
+            <EventMediaLinks
+              key={`media-${refreshKey}`}
+              eventId={event.id}
+              onUnlink={() => setRefreshKey(prev => prev + 1)}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -32,13 +32,22 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ eventId, onUploadComplete, on
       for (const file of acceptedFiles) {
         const fileExt = file.name.split('.').pop();
         const timestamp = new Date().getTime();
-        const fileName = `${timestamp}-${file.name}`;
+
+        // Clean filename: remove accents, spaces, and special characters
+        const cleanFileName = file.name
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '') // Remove accents
+          .replace(/\s+/g, '-') // Replace spaces with hyphens
+          .replace(/[^a-zA-Z0-9.-]/g, '') // Remove special characters
+          .toLowerCase();
+
+        const fileName = `${timestamp}-${cleanFileName}`;
         const filePath = `${eventId === 'gallery' ? 'general' : eventId}/${fileName}`;
 
         console.log('Uploading file:', fileName, 'to path:', filePath);
 
         const { error: uploadError } = await supabase.storage
-          .from('media')
+          .from('myfamily')
           .upload(filePath, file);
 
         if (uploadError) {
@@ -46,7 +55,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ eventId, onUploadComplete, on
         }
 
         const { data: { publicUrl } } = supabase.storage
-          .from('media')
+          .from('myfamily')
           .getPublicUrl(filePath);
         
         console.log('File uploaded, public URL:', publicUrl);
@@ -57,6 +66,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ eventId, onUploadComplete, on
             title: file.name,
             file_url: publicUrl,
             file_type: file.type.startsWith('image/') ? 'image' : 'document',
+            file_size: file.size,
             event_id: eventId === 'gallery' ? null : eventId,
             user_id: currentUser.id
           })
@@ -68,7 +78,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ eventId, onUploadComplete, on
 
         if (dbError) {
           await supabase.storage
-            .from('media')
+            .from('myfamily')
             .remove([filePath]);
           throw new Error(`Erreur lors de l'enregistrement: ${dbError.message}`);
         }

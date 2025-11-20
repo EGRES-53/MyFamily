@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Trash2, FileText, Image as ImageIcon, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, FileText, Image as ImageIcon, ExternalLink, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { downloadMediaLocally } from '../../utils/storage';
 
 interface Media {
   id: string;
@@ -13,9 +14,19 @@ interface Media {
 interface MediaGalleryProps {
   media: Media[];
   onDelete: (id: string) => void;
+  onDownloadError?: (message: string) => void;
 }
 
-const MediaGallery: React.FC<MediaGalleryProps> = ({ media, onDelete }) => {
+const MediaGallery: React.FC<MediaGalleryProps> = ({ media, onDelete, onDownloadError }) => {
+  const handleDownload = async (url: string, title: string) => {
+    try {
+      await downloadMediaLocally(url, title);
+    } catch (error) {
+      if (onDownloadError) {
+        onDownloadError('Erreur lors du téléchargement du fichier');
+      }
+    }
+  };
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {media.map((item) => (
@@ -37,13 +48,22 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({ media, onDelete }) => {
           <div className="mt-2">
             <div className="flex justify-between items-center">
               <p className="text-sm text-neutral-600 truncate flex-1">{item.title}</p>
-              <button
-                onClick={() => onDelete(item.id)}
-                className="ml-2 p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                title="Supprimer"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => handleDownload(item.url, item.title)}
+                  className="p-1.5 text-neutral-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors"
+                  title="Télécharger"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => onDelete(item.id)}
+                  className="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                  title="Supprimer"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
             {item.uploaded_at && (
               <p className="text-xs text-neutral-500 mt-1">

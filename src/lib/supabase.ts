@@ -11,7 +11,10 @@ if (!supabaseAnonKey) {
   throw new Error('VITE_SUPABASE_ANON_KEY is missing. Please check your .env file and add your Supabase project anonymous key.');
 }
 
-// Force cache refresh by adding timestamp to client identifier
+// Force cache refresh by adding version to client identifier
+// Increment version when schema changes to force refresh
+const SCHEMA_VERSION = '2.0';
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   db: {
     schema: 'public'
@@ -23,7 +26,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'X-Client-Info': `souviens-toi-app-${Date.now()}`,
+      'X-Client-Info': `souviens-toi-v${SCHEMA_VERSION}`,
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
       'Expires': '0'

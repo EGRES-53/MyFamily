@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { FileText, Image as ImageIcon, ExternalLink, Unlink } from 'lucide-react';
+import { FileText, Image as ImageIcon, ExternalLink, Unlink, Download } from 'lucide-react';
+import { downloadMediaLocally } from '../../utils/storage';
 import { useToast } from '../../contexts/ToastContext';
 
 interface Media {
@@ -16,6 +17,11 @@ interface EventMediaLinksProps {
   onUnlink?: () => void;
 }
 
+// Fonction pour corriger l'URL du bucket
+const fixBucketUrl = (url: string): string => {
+  return url.replace('/object/public/media/', '/object/public/myfamily/');
+};
+
 const EventMediaLinks: React.FC<EventMediaLinksProps> = ({ eventId, onUnlink }) => {
   const [linkedMedia, setLinkedMedia] = useState<Media[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,14 +29,25 @@ const EventMediaLinks: React.FC<EventMediaLinksProps> = ({ eventId, onUnlink }) 
 
   const fetchLinkedMedia = async () => {
     try {
+      // Vérifier que eventId est valide
+      if (!eventId || eventId === 'undefined' || eventId === 'null') {
+        console.warn('Invalid eventId:', eventId);
+        setLinkedMedia([]);
+        setLoading(false);
+        return;
+      }
+
       console.log('Fetching media for event ID:', eventId);
-      
+
       const { data, error } = await supabase
         .from('media')
         .select('*')
         .eq('event_id', eventId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching media:', error);
+        throw error;
+      }
       
       console.log('Fetched media data:', data);
       setLinkedMedia(data || []);
@@ -43,8 +60,23 @@ const EventMediaLinks: React.FC<EventMediaLinksProps> = ({ eventId, onUnlink }) 
   };
 
   useEffect(() => {
-    fetchLinkedMedia();
+    // Ne charger que si eventId est valide
+    if (eventId && eventId !== 'undefined' && eventId !== 'null') {
+      fetchLinkedMedia();
+    } else {
+      setLoading(false);
+    }
   }, [eventId]);
+
+  const handleDownload = async (file_url: string, title: string) => {
+    try {
+      await downloadMediaLocally(file_url, title);
+      showToast('Fichier téléchargé avec succès', 'success');
+    } catch (error) {
+      console.error('Error downloading media:', error);
+      showToast('Erreur lors du téléchargement', 'error');
+    }
+  };
 
   const handleUnlink = async (mediaId: string) => {
     try {
@@ -87,7 +119,7 @@ const EventMediaLinks: React.FC<EventMediaLinksProps> = ({ eventId, onUnlink }) 
           <div className="flex-shrink-0 mr-4">
             {media.file_type === 'image' ? (
               <div className="w-16 h-16 rounded overflow-hidden">
-                <img src={media.file_url} alt={media.title} className="w-full h-full object-cover" />
+                <img src={fixBucketUrl(media.file_url)} alt={media.title} className="w-full h-full object-cover" />
               </div>
             ) : (
               <div className="w-16 h-16 flex items-center justify-center bg-primary-50 rounded">
@@ -108,13 +140,19 @@ const EventMediaLinks: React.FC<EventMediaLinksProps> = ({ eventId, onUnlink }) 
             </p>
             <div className="flex items-center gap-2">
               <a
-                href={media.file_url}
+                href={fixBucketUrl(media.file_url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-primary-600 hover:text-primary-800 flex items-center"
               >
                 Ouvrir <ExternalLink size={14} className="ml-1" />
               </a>
+              <button
+                onClick={() => handleDownload(fixBucketUrl(media.file_url), media.title)}
+                className="text-sm text-primary-600 hover:text-primary-800 flex items-center"
+              >
+                Télécharger <Download size={14} className="ml-1" />
+              </button>
               <button
                 onClick={() => handleUnlink(media.id)}
                 className="text-sm text-red-500 hover:text-red-700 flex items-center"

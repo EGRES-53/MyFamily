@@ -21,6 +21,8 @@ interface MediaItem {
 
 interface MediaItemWithSignedUrl extends MediaItem {
   signedUrl: string;
+  width?: number;
+  height?: number;
 }
 
 const GalleryPage: React.FC = () => {
@@ -55,25 +57,70 @@ const GalleryPage: React.FC = () => {
       // Générer des URLs signées pour chaque média
       const mediaWithSignedUrls = await Promise.all(
         (data || []).map(async (item) => {
-          const filePath = extractFilePathFromUrl(item.file_url);
-          console.log(`Processing media: ${item.title} - FilePath: ${filePath}`);
+          try {
+            const filePath = extractFilePathFromUrl(item.file_url);
+            console.log(`Processing media: ${item.title} - FilePath: ${filePath}`);
 
-          if (filePath && item.file_type === 'image') {
-            const signedUrl = await getSignedUrl(filePath);
-            console.log(`Signed URL generated for ${item.title}:`, signedUrl ? 'Success' : 'Failed');
+            if (filePath && item.file_type === 'image') {
+              // Charger l'image pour obtenir ses dimensions réelles AVANT de générer l'URL signée
+              const dimensions = await Promise.race([
+                new Promise<{ width: number; height: number }>((resolve) => {
+                  const img = new Image();
+                  img.crossOrigin = 'anonymous';
+                  img.onload = () => {
+                    console.log(`Image loaded successfully: ${item.title} - ${img.naturalWidth}x${img.naturalHeight}`);
+                    resolve({ width: img.naturalWidth, height: img.naturalHeight });
+                  };
+                  img.onerror = (error) => {
+                    console.warn(`Failed to load image for dimensions: ${item.title}`, error);
+                    resolve({ width: 1024, height: 768 });
+                  };
+                  img.src = item.file_url;
+                }),
+                new Promise<{ width: number; height: number }>((resolve) =>
+                  setTimeout(() => {
+                    console.warn(`Timeout loading image dimensions: ${item.title}`);
+                    resolve({ width: 1024, height: 768 });
+                  }, 10000)
+                )
+              ]);
+
+              const signedUrl = await getSignedUrl(filePath);
+              console.log(`Signed URL generated for ${item.title}:`, signedUrl ? 'Success' : 'Failed');
+              console.log(`Dimensions for ${item.title}:`, dimensions.width, 'x', dimensions.height);
+
+              return {
+                ...item,
+                signedUrl: signedUrl || item.file_url,
+                width: dimensions.width,
+                height: dimensions.height
+              };
+            }
+
             return {
               ...item,
-              signedUrl: signedUrl || item.file_url
+              signedUrl: item.file_url
+            };
+          } catch (itemError) {
+            console.error(`Error processing media item ${item.title}:`, itemError);
+            return {
+              ...item,
+              signedUrl: item.file_url,
+              width: 1024,
+              height: 768
             };
           }
-
-          return {
-            ...item,
-            signedUrl: item.file_url
-          };
         })
       );
 
+      console.log('Final media with signed URLs and dimensions:',
+        mediaWithSignedUrls.map(m => ({
+          title: m.title,
+          width: m.width,
+          height: m.height,
+          type: m.file_type
+        }))
+      );
       setMedia(mediaWithSignedUrls);
     } catch (error: any) {
       console.error('Error fetching media:', error);
@@ -272,7 +319,12 @@ const GalleryPage: React.FC = () => {
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-vintage p-6 border border-neutral-200">
-            <Gallery>
+            <Gallery
+              options={{
+                showHideAnimationType: 'zoom',
+                bgOpacity: 0.9
+              }}
+            >
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredMedia.map((item) => (
                   <div key={item.id} className="group relative">
@@ -280,8 +332,8 @@ const GalleryPage: React.FC = () => {
                       <Item
                         original={item.signedUrl}
                         thumbnail={item.signedUrl}
-                        width="1024"
-                        height="768"
+                        width={Number(item.width) || 1024}
+                        height={Number(item.height) || 768}
                       >
                         {({ ref, open }) => (
                           <div

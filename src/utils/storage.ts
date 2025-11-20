@@ -24,18 +24,30 @@ export const getSignedUrl = async (filePath: string): Promise<string | null> => 
 // Extraire le chemin du fichier depuis une URL complète
 export const extractFilePathFromUrl = (url: string): string | null => {
   try {
+    console.log('Extracting file path from URL:', url);
+
     // Format: https://xxx.supabase.co/storage/v1/object/public/myfamily/path/to/file.jpg
-    const match = url.match(/\/object\/public\/myfamily\/(.+)$/);
-    if (match && match[1]) {
-      return match[1];
+    const publicMatch = url.match(/\/object\/public\/myfamily\/(.+?)(?:\?|$)/);
+    if (publicMatch && publicMatch[1]) {
+      console.log('Extracted path (public):', publicMatch[1]);
+      return publicMatch[1];
     }
 
-    // Format alternatif: path direct
-    const parts = url.split(`/${BUCKET_NAME}/`);
-    if (parts.length > 1) {
-      return parts[1];
+    // Format: https://xxx.supabase.co/storage/v1/object/sign/myfamily/path/to/file.jpg
+    const signMatch = url.match(/\/object\/sign\/myfamily\/(.+?)(?:\?|$)/);
+    if (signMatch && signMatch[1]) {
+      console.log('Extracted path (sign):', signMatch[1]);
+      return signMatch[1];
     }
 
+    // Format alternatif: chercher après le bucket name
+    const bucketMatch = url.match(new RegExp(`\\/${BUCKET_NAME}\\/(.+?)(?:\\?|$)`));
+    if (bucketMatch && bucketMatch[1]) {
+      console.log('Extracted path (bucket):', bucketMatch[1]);
+      return bucketMatch[1];
+    }
+
+    console.warn('Could not extract file path from URL:', url);
     return null;
   } catch (error) {
     console.error('Error extracting file path:', error);
@@ -104,4 +116,3 @@ export const deleteFromStorage = async (path: string): Promise<{ error: Error | 
     return { error: error as Error };
   }
 };
-

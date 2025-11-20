@@ -45,6 +45,16 @@ const MediaLinkSelector: React.FC<MediaLinkSelectorProps> = ({ eventId, onLinkCo
 
   const handleLinkMedia = async (mediaId: string) => {
     try {
+      // Valider les IDs
+      if (!eventId || eventId === 'undefined' || eventId === 'null') {
+        showToast('ID d\'événement invalide', 'error');
+        return;
+      }
+      if (!mediaId || mediaId === 'undefined' || mediaId === 'null') {
+        showToast('ID de média invalide', 'error');
+        return;
+      }
+
       const { error } = await supabase
         .from('media')
         .update({ event_id: eventId })

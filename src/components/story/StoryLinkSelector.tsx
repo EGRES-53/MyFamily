@@ -27,6 +27,14 @@ const StoryLinkSelector: React.FC<StoryLinkSelectorProps> = ({ eventId, onLinkCo
 
   const fetchAvailableStories = async () => {
     try {
+      // Valider l'eventId
+      if (!eventId || eventId === 'undefined' || eventId === 'null') {
+        console.error('Invalid eventId:', eventId);
+        showToast('ID d\'événement invalide', 'error');
+        setLoading(false);
+        return;
+      }
+
       const { data: allStories, error: storiesError } = await supabase
         .from('stories')
         .select('*')
@@ -55,6 +63,16 @@ const StoryLinkSelector: React.FC<StoryLinkSelectorProps> = ({ eventId, onLinkCo
 
   const handleLinkStory = async (storyId: string) => {
     try {
+      // Valider les IDs
+      if (!eventId || eventId === 'undefined' || eventId === 'null') {
+        showToast('ID d\'événement invalide', 'error');
+        return;
+      }
+      if (!storyId || storyId === 'undefined' || storyId === 'null') {
+        showToast('ID de récit invalide', 'error');
+        return;
+      }
+
       const { error } = await supabase
         .from('event_stories')
         .insert({ event_id: eventId, story_id: storyId });

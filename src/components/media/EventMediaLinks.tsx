@@ -17,9 +17,21 @@ interface EventMediaLinksProps {
   onUnlink?: () => void;
 }
 
-// Fonction pour corriger l'URL du bucket
+// Fonction pour corriger l'URL du bucket et le domaine Supabase
 const fixBucketUrl = (url: string): string => {
-  return url.replace('/object/public/media/', '/object/public/myfamily/');
+  let fixedUrl = url;
+
+  // Corriger le nom du bucket
+  fixedUrl = fixedUrl.replace('/object/public/media/', '/object/public/myfamily/');
+
+  // Corriger l'ancien domaine Supabase si présent
+  const currentSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (currentSupabaseUrl) {
+    const currentDomain = currentSupabaseUrl.replace('https://', '').replace('.supabase.co', '');
+    fixedUrl = fixedUrl.replace(/https:\/\/[a-z]+\.supabase\.co/, `https://${currentDomain}.supabase.co`);
+  }
+
+  return fixedUrl;
 };
 
 const EventMediaLinks: React.FC<EventMediaLinksProps> = ({ eventId, onUnlink }) => {

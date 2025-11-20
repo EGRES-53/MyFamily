@@ -29,11 +29,21 @@ const EventPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (id) fetchEvent();
+    if (id && id !== 'undefined' && id !== 'null') {
+      fetchEvent();
+    } else {
+      setLoading(false);
+      showToast('ID d\'événement invalide', 'error');
+      navigate('/timeline');
+    }
   }, [id]);
 
   const fetchEvent = async () => {
     try {
+      if (!id || id === 'undefined' || id === 'null') {
+        throw new Error('Invalid event ID');
+      }
+
       const { data, error } = await supabase
         .from('events')
         .select('*')
@@ -178,7 +188,7 @@ const EventPage: React.FC = () => {
             </Button>
           </div>
 
-          {showStorySelector && (
+          {showStorySelector && event?.id && (
             <div className="mb-4 border-t pt-4">
               <h3 className="text-sm font-semibold text-neutral-700 mb-3">
                 Sélectionne un récit à lier :
@@ -217,7 +227,7 @@ const EventPage: React.FC = () => {
             </Button>
           </div>
 
-          {showMediaSelector && (
+          {showMediaSelector && event?.id && (
             <div className="mb-4 border-t pt-4">
               <h3 className="text-sm font-semibold text-neutral-700 mb-3">
                 Sélectionne un média à lier :
